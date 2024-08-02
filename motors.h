@@ -1,40 +1,57 @@
 #include <stdio.h>
 #include <Wire.h>
-#include <cmath>
 #include <PCA9685.h>
 
 #define MIN_PWM 0
 #define MAX_PWM 4095
 
-// PWM channels of pca9685 0-16
-#define PWM_CHANNEL1 9
-#define PWM_CHANNEL2 8
-#define PWM_CHANNEL3 11
-#define PWM_CHANNEL4 10
+// PCA9685 PWM channels 0-16
+#define MOTOR_RIGHT_CONTROL 4
+#define MOTOR_LEFT_CONTROL 7
+
+// Arduino channel
+#define MOTOR_RIGHT_FORWARD 6
+#define MOTOR_RIGHT_BACKWARD 7
+#define MOTOR_LEFT_FORWARD 4
+#define MOTOR_LEFT_BACKWARD 5
 
 PCA9685 pwm;
 
-void setPWMMotors(int c1, int c2, int c3, int c4)
+void setPWMMotors(int c1, int c2)
 {
-  char dbg_str[30];
-  sprintf(dbg_str,"C1: %d\tC2: %d\tC3: %d\tC4: %d",c1,c2,c3,c4);
-  Serial.println(dbg_str);
+  // char dbg_str[30];
+  // sprintf(dbg_str,"C1: %d\tC2: %d",c1,c2);
+  // Serial.println(dbg_str);
 
-  pwm.setChannelPwm(PWM_CHANNEL1, c1);
-  pwm.setChannelPwm(PWM_CHANNEL2, c2);
-  pwm.setChannelPwm(PWM_CHANNEL3, c3);
-  pwm.setChannelPwm(PWM_CHANNEL4, c4);
+  //true = 1
+  //false = 0
+  digitalWrite(MOTOR_RIGHT_FORWARD, c1 > 0);
+  digitalWrite(MOTOR_RIGHT_BACKWARD, !(c1 > 0));
+
+  digitalWrite(MOTOR_LEFT_FORWARD, c2 > 0);
+  digitalWrite(MOTOR_LEFT_BACKWARD, !(c2 > 0));
+
+  pwm.setChannelPWM(MOTOR_RIGHT_CONTROL, abs(c1));
+  pwm.setChannelPWM(MOTOR_LEFT_CONTROL, abs(c2));
+}
+
+int getServoPWM(int milisec) {
+  return map(milisec, 0, 2, 0, 410);
 }
 
 void initMotors()
 {
+  Serial.println("1");
   Wire.begin();
+  Serial.println("2");
 
   pwm.resetDevices();
+  Serial.println("3");
 
   pwm.init();
+  Serial.println("4");
 
   pwm.setPWMFrequency(50);
 
-  setPWMMotors(0, 0, 0, 0);
+  pwm.setAllChannelsPWM(0);
 }

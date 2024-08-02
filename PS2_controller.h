@@ -3,12 +3,11 @@
 PS2X ps2x; // create PS2 Controller Class object
 
 #define PS2_DAT 12 // MISO  19
-#define PS2_CMD 13 // MOSI  23
-#define PS2_SEL 15 // SS     5
-#define PS2_CLK 14 // SLK   18
+#define PS2_CMD 11 // MOSI  23
+#define PS2_SEL 10 // SS     5
+#define PS2_CLK 13 // SLK   18
 
-#define SERVO 3
-#define THU_BONG 12
+#define SERVO 6
 
 #define TOP_SPEED 4090
 #define NORM_SPEED 2048
@@ -36,7 +35,20 @@ bool PS2control()
     }
   }
 
-  int nJoyX = 128 - ps2x.Analog(PSS_RY); // read x-joystick
+  int servo = 0;
+  if (ps2x.Button(PSB_GREEN)) {
+    // Go up
+    Serial.println("Going up");
+    servo = 200;
+  } else if (ps2x.Button(PSB_BLUE)) {
+    // Go down
+    Serial.println("Going down");
+    servo = 400;
+  }
+  pwm.setChannelPWM(0, servo);
+  pwm.setChannelPWM(1, 600 - servo);
+
+  int nJoyX = 127 - ps2x.Analog(PSS_RY); // read x-joystick
   int nJoyY = 128 - ps2x.Analog(PSS_LX); // read y-joystick
   int nMotMixL;                          // Motor (left) mixed output
   int nMotMixR;                          // Motor (right) mixed output
@@ -53,31 +65,16 @@ bool PS2control()
     nMotMixR = nJoyX;
   }
 
-  int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
+  nMotMixL = map(nMotMixL, -128, 128, -speed, speed);
+  nMotMixR = map(nMotMixR, -128, 128, -speed, speed);
 
-  if (nMotMixR > 0)
-  {
-    c3 = nMotMixR;
-    c3 = map(c3, 0, 128, 0, speed);
-  }
+  // int test = map(nMotMixL, -128, 128, 100, 500);
+  // Serial.println(test);
+  // pwm.setChannelPWM(0, test);
+  // pwm.setChannelPWM(1, 600 - test);
 
-  else if (nMotMixR < 0)
-  {
-    c4 = abs(nMotMixR);
-    c4 = map(c4, 0, 128, 0, speed);
-  }
 
-  if (nMotMixL > 0)
-  {
-    c1 = nMotMixL;
-    c1 = map(c1, 0, 128, 0, speed);
-  }
-  else if (nMotMixL < 0)
-  {
-    c2 = abs(nMotMixL);
-    c2 = map(c2, 0, 128, 0, speed);
-  }
-  setPWMMotors(c1, c2, c3, c4);
+  setPWMMotors(nMotMixR, nMotMixL);
   return 1;
 }
 
